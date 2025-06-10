@@ -2,7 +2,8 @@ import speech_recognition as sr
 import webbrowser
 import pyttsx3
 import musicLibrary
-# import requests
+import requests
+from google import genai
 
 
 recognizer = sr.Recognizer()
@@ -12,6 +13,14 @@ newsapi = "bef34fac283b4113b51f78b3e96c966a"
 def speak(text):
     engine.say(text)
     engine.runAndWait() 
+
+def aiprocess(command):
+    client = genai.Client(api_key="AIzaSyCgZ6jhDcLNl8XQi8go2hUK2Z1vw4RinqA")
+
+    response = client.models.generate_content(
+        model="gemini-2.0-flash", contents="You are a virtual assistant named Jarvis. You can open websites like Google, YouTube, Stack Overflow, GitHub, and Facebook. You can also play music and provide news updates. How can I assist you today?"
+    )
+    return response.text    
 
 def processCommand(c):
     if "open google" in c.lower():
@@ -28,8 +37,21 @@ def processCommand(c):
         song = c.lower().split(" ")[1]
         link = musicLibrary.music[song]
         webbrowser.open(link)
-    # elif "news" in c.lower():
-    #     r = requests.get(f"https://newsapi.org/v2/top-headlines?country=in&apiKey={newsapi}")
+    elif "news" in c.lower():
+
+        r = requests.get(f"https://newsapi.org/v2/top-headlines?country=us&apiKey={newsapi}")
+        if r.status_code == 200:
+            data = r.json()
+            articles = data.get("articles", [])  # Get the list of articles
+
+            # Print the headlines
+            for i, article in enumerate(articles, start=1):
+                speak(f"{i}. {article['title']}")
+        else:
+            # Integrating with open AI
+            output = aiprocess(c)
+            speak(output)
+
 
 if __name__ == "__main__":
     speak("Initializing Jarvis.....")
