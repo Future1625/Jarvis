@@ -1,84 +1,119 @@
 import speech_recognition as sr
+import logging
 import webbrowser
 import pyttsx3
 import musicLibrary
 import requests
 from google import genai
 
-
-recognizer = sr.Recognizer()
-engine = pyttsx3.init()
+# constants:
+WAKE_WORD = "jarvis"
 newsapi = "bef34fac283b4113b51f78b3e96c966a"
+GENAI_API_KEY = "AIzaSyCgZ6jhDcLNl8go2hUK2Z1vw4RinqA"
 
-def speak(text):
+
+# logger setup:
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
+
+engine = pyttsx3.init()          #TTS engine
+
+
+def speak(text: str):
     engine.say(text)
     engine.runAndWait() 
+  
 
-def aiprocess(command):
-    client = genai.Client(api_key="AIzaSyCgZ6jhDcLNl8XQi8go2hUK2Z1vw4RinqA")
+def listen():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        log.info("Listening...")
+        try:
+            audio = recognizer.listen(source, timeout=5)
+            command = recognizer.recognize_google(audio)
+            log.info(f"Recognized: {command}")
+            return command.lower()
+        except sr.UnknownValueError:
+            log.warning("Could not understand the audio.")
+            speak("I could not understand what you said, please try again.")
+        except sr.RequestError as e:
+            log.error(f"Error with the speech recognition service: {e}")
+            speak("There was an error with the speech recognition service, please try again later.")
+    return None
 
-    response = client.models.generate_content(
-        model="gemini-2.0-flash", contents="You are a virtual assistant named Jarvis. You can open websites like Google, YouTube, Stack Overflow, GitHub, and Facebook. You can also play music and provide news updates. How can I assist you today?"
-    )
-    return response.text    
+def fetch_news():
+    # Fetch top news headlines using NewsAPI
+    url = f"https://newsapi.org/v2/top-headlines?country=us&apiKey={newsapi}"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()  # Raise an error for bad responses
+        articles = response.json().get("articles", [])
+        return [article["title"] for article in articles]
+    except Exception as e:
+        log.error(f"Error fetching news: {e}")
+        return []
 
-def processCommand(c):
-    if "open google" in c.lower():
+def generate_ai_response(prompt: str):  
+    # Generate a response from Gemini AI model.
+    try:
+        client = genai.Client(api_key=GENAI_API_KEY)
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents = prompt
+        )
+        return response.text
+    except Exception as e:
+        log.error(f"Gemini AI error: {e}")
+        return "I encountered an error while trying to process your request with AI."
+
+
+def process_command(command: str):
+    # Process the user’s command and take action.
+    if "open google" in command.lower():
         webbrowser.open("https://www.google.com")
-    elif "open youtube" in c.lower():
+    elif "open youtube" in command.lower():
         webbrowser.open("https://www.youtube.com")
-    elif "open stack overflow" in c.lower():
+    elif "open stack overflow" in command.lower():
         webbrowser.open("https://stackoverflow.com")
-    elif "open github" in c.lower():
+    elif "open github" in command.lower():
         webbrowser.open("https://github.com")
-    elif "open facebook" in c.lower():
+    elif "open facebook" in command.lower():
         webbrowser.open("https://www.facebook.com")
-    elif c.lower().startswith("play"):
-        song = c.lower().split(" ")[1]
+    elif command.lower().startswith("play"):
+        song = command.lower().split(" ")[1]
         link = musicLibrary.music[song]
         webbrowser.open(link)
-    elif "news" in c.lower():
+        speak(f"playing {song}")
+        if link not in song:
+            speak("Song not found in the library.")
+    elif "news" in command.lower():
+        headlines = fetch_news()
+        if headlines:
+            for i, headlines in enumerate(headlines[:5], start=1):
+                speak(f"{i}: {headlines}")
+            else:
+                speak("No news articles found.")
+    else:
+        prompt = f"You are a virtual assistant named Jarvis. User said: {command}"
+        output = generate_ai_response(prompt)
+        speak(output)
 
-        r = requests.get(f"https://newsapi.org/v2/top-headlines?country=us&apiKey={newsapi}")
-        if r.status_code == 200:
-            data = r.json()
-            articles = data.get("articles", [])  # Get the list of articles
+def wait_for_wake_word():
+    # Wait until the wake word is detected.
+    while True:
+        heard = listen()
+        if heard and WAKE_WORD in heard.lower():
+            speak("Yes?")
+            return
 
-            # Print the headlines
-            for i, article in enumerate(articles, start=1):
-                speak(f"{i}. {article['title']}")
-        else:
-            # Integrating with open AI
-            output = aiprocess(c)
-            speak(output)
-
+def main():
+    speak("Intializing Jarvis...")
+    while True:
+        wait_for_wake_word()
+        command = listen()
+        if command:
+            process_command(command)
 
 if __name__ == "__main__":
-    speak("Initializing Jarvis.....")
-    while True:
-        # Listen for the wake word "Jarvis"
-        # obtain audio from the microphone 
-
-        r = sr.Recognizer()
-        print("recognizing...")
-        try:
-            with sr.Microphone() as source:
-                print("Listening...")
-                audio = r.listen(source)  
-            word = r.recognize_google(audio)
-            if  (word.lower() == "jarvis"):
-                speak("Yes")
-                # listen for word 
-                with sr.Microphone() as source:
-                    print("Jarvis Activated...")   
-                    audio = r.listen(source)  
-                    command = r.recognize_google(audio)
-
-                    processCommand(command)
-
-
-        except sr.UnknownValueError:
-            print("Jarvis could not understand the audio") 
-            speak("I could not understand what you said, please try again.")    
-        except sr.RequestError as e:
-            print("Jarvis error; {0}".format(e))
+    main()
