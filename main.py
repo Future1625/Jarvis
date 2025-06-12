@@ -95,11 +95,12 @@ def process_command(command: str):
         webbrowser.open("https://www.facebook.com")
     elif command.lower().startswith("play"):
         song = command.lower().split(" ")[1]
-        link = musicLibrary.music[song]
-        webbrowser.open(link)
-        speak(f"playing {song}")
-        if link not in song:
-            speak("Song not found in the library.")
+        if song in musicLibrary.music:
+            link = musicLibrary.music[song]
+            webbrowser.open(link)
+            speak(f"Playing {song}")
+        else:
+            speak("Sorry, I couldn't find that song in the music library.")
     elif "news" in command.lower():
         headlines = fetch_news()
         if headlines:

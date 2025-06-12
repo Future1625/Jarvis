@@ -1,9 +1,8 @@
-music={
-    "stealth": "https://youtu.be/U47Tr9BB_wE?si=KOWzQSSy8du8hE2D",
-    "march":"https://youtu.be/0b1a2d8c4e4?si=6g3k7f5j9s8F2ZyH",
-    "wolf":"https://youtu.be/3X9b1d8c4e4?si=5g3k7f5j9s8F2ZyH",  
-    "skyfall":"https://youtu.be/4X9b1d8c4e4?si=6g3k7f5j9s8F2ZyH",
-    "ocean":"https://youtu.be/5X9b1d8c4e4?si=7g3k7f5j9s8F2ZyH",
-    "dream":"https://youtu.be/6X9b1d8c4e4?si=8g3k7f5j9s8F2ZyH",
-    "adventure":"https://youtu.be/7X9b1d8c4e4?si=9g3k7f5j9s8F2ZyH",
+music = {
+    "lofi": "https://www.youtube.com/watch?v=jfKfPfyJRdk",  # Lofi hip hop radio
+    "jazz": "https://www.youtube.com/watch?v=Dx5qFachd3A",  # Jazz relaxing music
+    "chill": "https://www.youtube.com/watch?v=5qap5aO4i9A",  # Chillhop radio
+    "coding": "https://www.youtube.com/watch?v=2hz_Dy9XMAQ",  # Coding music
+    "focus": "https://www.youtube.com/watch?v=qycqF1CWcXg",  # Focus background
+    "study": "https://www.youtube.com/watch?v=WPni755-Krg",  # Study music
 }
