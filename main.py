@@ -9,8 +9,8 @@ from google import genai
 # constants:
 WAKE_WORD = "jarvis"
 newsapi = "bef34fac283b4113b51f78b3e96c966a"
-GENAI_API_KEY = "AIzaSyCgZ6jhDcLNl8go2hUK2Z1vw4RinqA"
-
+OPENROUTER_API_KEY = "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"
+OPENROUTER_MODEL = "undi95/toppy-m-7b"
 
 # logger setup:
 logging.basicConfig(level=logging.INFO)
@@ -54,18 +54,31 @@ def fetch_news():
         log.error(f"Error fetching news: {e}")
         return []
 
-def generate_ai_response(prompt: str):  
-    # Generate a response from Gemini AI model.
+def generate_ai_response(prompt: str):
     try:
-        client = genai.Client(api_key=GENAI_API_KEY)
-        response = client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents = prompt
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": OPENROUTER_MODEL,
+                "messages": [
+                    {"role": "system", "content": "You are a helpful virtual assistant named Jarvis, designed to assist users with various tasks."},
+                    {"role": "user", "content": prompt},
+                ]
+            }
         )
-        return response.text
+
+        if response.status_code == 200:
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
+        else:
+            return f"Error: {response.status_code} - {response.text}"
+
     except Exception as e:
-        log.error(f"Gemini AI error: {e}")
-        return "I encountered an error while trying to process your request with AI."
+        return f"Exception occurred: {e}"
 
 
 def process_command(command: str):
