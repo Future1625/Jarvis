@@ -4,14 +4,15 @@ from core.ai import generate_ai_response
 from musicLibrary import music
 from config import WAKE_WORD, NEWS_API_KEY
 from utils.logger import setup_logger
-from dotenv import load_dotenv
+from core.jokes import get_programmer_joke
+from core.weather import get_weather
+from core.wiki import search_wikipedia
+
 
 import requests
 import webbrowser
 import datetime
 
-
-# load_dotenv()
 
 log = setup_logger()
 
@@ -27,31 +28,43 @@ def fetch_news():
         return []
 
 def process_command(command: str):
-    if "open google" in command:
+    if "open google" in command.lower():
         webbrowser.open("https://www.google.com")
-    elif "open youtube" in command:
+    elif "open youtube" in command.lower():
         webbrowser.open("https://www.youtube.com")
-    elif command.startswith("play"):
+    elif command.lower().startswith("play"):
         song = command.split(" ")[1]
         if song in music:
             webbrowser.open(music[song])
             speak(f"Playing {song}")
         else:
             speak("Song not found.")
-    elif "news" in command:
+    elif "news" in command.lower():
         headlines = fetch_news()
         if headlines:
             for i, h in enumerate(headlines[:5], start=1):
                 speak(f"{i}: {h}")
         else:
             speak("No news right now.")
-    elif "time" in command:
+    elif "time" in command.lower():
         current_time = datetime.datetime.now().strftime("%I:%M %p")
         speak(f"The time is {current_time}")
-    elif "date"in command:
+    elif "date"in command.lower():
         current_date = datetime.datetime.now().strftime("%A, %d %B %Y")
         speak(f"Today's date is {current_date}")
-    
+    elif "joke" in command.lower():
+        joke = get_programmer_joke()
+        speak(joke)
+    elif "weather" in command.lower():
+        weather_report = get_weather()
+        speak(weather_report) 
+    elif "who is" in command.lower() or "what is" in command.lower():
+        query = command.lower().replace("who is", "").replace("what is", "").strip()
+        if query:
+            result = search_wikipedia(query)
+            speak(result)
+        else:
+            speak("Please specify what you want to know about.")
     else:
         prompt = f"User said: {command}"
         response = generate_ai_response(prompt)
