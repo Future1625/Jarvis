@@ -7,11 +7,16 @@ from utils.logger import setup_logger
 from core.jokes import get_programmer_joke
 from core.weather import get_weather
 from core.wiki import search_wikipedia
-
+from core.system_control import (
+    open_notepad, open_calculator, open_chrome,
+    shutdown_system, restart_system, lock_system
+)
 
 import requests
 import webbrowser
 import datetime
+import os
+import subprocess
 
 
 log = setup_logger()
@@ -65,6 +70,26 @@ def process_command(command: str):
             speak(result)
         else:
             speak("Please specify what you want to know about.")
+    elif "open notepad" in command:
+        open_notepad()
+
+    elif "open calculator" in command:
+        open_calculator()
+
+    elif "open chrome" in command:
+        open_chrome()
+
+    elif "shutdown" in command:
+        speak("Shutting down the system.")
+        shutdown_system()
+
+    elif "restart" in command:
+        speak("Restarting the system.")
+        restart_system()
+
+    elif "lock the system" in command or "lock system" in command:
+        speak("Locking the system.")
+        lock_system()
     else:
         prompt = f"User said: {command}"
         response = generate_ai_response(prompt)
